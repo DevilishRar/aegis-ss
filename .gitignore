@@ -1,0 +1,9 @@
+/target
+.build-venv
+.venv
+/artifacts/*
+!artifacts/.gitkeep
+/dist
+*.pdb
+
+/release/

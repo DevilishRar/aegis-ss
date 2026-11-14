@@ -1,0 +1,33 @@
+[package]
+name = "aegis-ss"
+version = "1.0.0"
+edition = "2021"
+description = "AEGIS-SS - transparent, read-only, zero-network forensic integrity auditor for screenshare sessions (Rust edition)"
+license = "MIT"
+default-run = "aegis-ss"
+
+[lib]
+name = "aegis_ss_core"
+path = "src/lib.rs"
+
+[[bin]]
+name = "aegis-ss"
+path = "src/main.rs"
+
+[[bin]]
+name = "aegis-cli"
+path = "src/bin/aegis-cli.rs"
+
+[profile.release]
+lto = "fat"
+codegen-units = 1
+opt-level = 3
+strip = "symbols"
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+chrono = "0.4"
+sha2 = "0.10"
+winreg = "0.52"
+eframe = "0.29"
