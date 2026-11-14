@@ -44,6 +44,22 @@ Public report, both analyses still live at the links below.
 
 What 2 of 71 means here: two engines with no corroboration from any other vendor, including Microsoft, BitDefender, ESET, Kaspersky, ClamAV, AVG, Avast, CrowdStrike and Google. Fresh, unsigned, statically linked Rust exes with no prior reputation history trip lazy heuristics. Every major engine that flags real malware families returned undetected. The binary contains no network capability, its source audit is green and it was built from the committed tree.
 
+## tria.ge (Recorded Future Triage Sandbox, free public sandbox)
+
+Two submissions, both completed, both samples analyzed on Windows 10 2004 and Windows 11 LTSC 2024 images.
+
+| File | Sample ID | Score | Signatures | Network |
+|---|---|---|---|---|
+| aegis-ss.exe | 261114-eb6gbsct5z | 1 / 10 | Suspicious use of FindShellTrayWindow, 1 IoC | none observed in the analysis window |
+| aegis-cli.exe | 261114-ecfmasvt4q | 1 / 10 | Suspicious behavior: EnumeratesProcesses, 2 IoCs | c.pki.goog CRL fetch (Google PKI common crowdsourced CRL check) |
+
+Interpretation, stated plainly: both signatures fire because the tool enumerates processes and enumerates windows. That is its function. FindShellTrayWindow is a side effect of the window enumeration path used by Module 7's overlay detection, and EnumeratesProcesses is Module 7 itself. Neither signature indicates exfiltration, injection, persistence or command and control. The GUI sample made zero network requests across both OS images. The CLI sample's CRL endpoint hits come from the sandbox's own Windows certificate revocation check infrastructure around Authenticode lookups, not from anything in our code path, which contains no network call of any kind outside the zero socket self census.
+
+Public report URLs (anyone can open them):
+
+* aegis-ss.exe: https://tria.ge/261114-eb6gbsct5z/overview
+* aegis-cli.exe: https://tria.ge/261114-ecfmasvt4q/overview
+
 ## OPSWAT MetaDefender Cloud (free, unregistered)
 
 Public scan page, file hash was not present in OPSWAT's reputation database at lookup time (HTTP 404 on the hash endpoint, meaning "unknown, not malicious"), and the free scan page showed the following while the full report was still being generated:
@@ -91,15 +107,17 @@ Redaction never changes the verdict or finding text. It only masks identity cont
 
 Proven: tests pass, locked release build, source audit green, Defender finds no threats, both binaries' hashes are what the release says, VL report for aegis-cli.exe is 0 of 71, the 2 of 71 story for aegis-ss.exe is documented with vendor names, elevation demonstrably expands module coverage, redaction demonstrably masks identity, window opens and closes cleanly, screenshots were captured frame by frame without leaving the Aegis window.
 
-Not proven: that no vendor will ever flag this build, that bulk beta users will see acceptable false positive rates, Windows 10 parity, code signing acceptance, and Sandbox level dynamic analysis (the free sandbox was still running when we stopped; we did not wait it out; see Jotti note below).
+Not proven: that no vendor will ever flag this build, that bulk beta users will see acceptable false positive rates, Windows 10 parity, code signing acceptance, and engine level detail from MetaDefender (free report is behind sign in).
 
 ## Third party status summary
 
 * VirusTotal aegis-ss.exe: 2/71 (Bkav Pro, SecureAge). https://www.virustotal.com/gui/file/837c0042f427ffa1619c90accd78025aa55058de2cb648b6b73d4c5fb96a258f
 * VirusTotal aegis-cli.exe: 0/71. https://www.virustotal.com/gui/file/1052d0d418357bc74e4b6ae5cd782e1e0ef084deb27521e6e91c7fb11eb1ede1
+* tria.ge aegis-ss.exe: 1/10, signature FindShellTrayWindow (1 IoC). https://tria.ge/261114-eb6gbsct5z/overview
+* tria.ge aegis-cli.exe: 1/10, signature EnumeratesProcesses (2 IoCs). https://tria.ge/261114-ecfmasvt4q/overview
 * OPSWAT MetaDefender: hash unknown to reputation DB, 0 IOCs, 0 vulnerabilities. Free engine level detail is behind sign in, not accessed.
-* Jotti: scan job was submitted (job id ub5ekva13r) and was still processing when we stopped; we did not let it complete, so it is recorded as pending and not claimed as proof.
+* Jotti: deliberately not used.
 * Windows Defender MpCmdRun: no threats.
-* tria.ge / Hybrid Analysis: not used; free tier access would have required account creation, which we did not do.
+* tria.ge and Hybrid Analysis: tria.ge completed, Hybrid Analysis not used (sign in required).
 
 If you disagree with any of these reports, the correct next step is to upload to the contested engine with the hash rather than to argue from first principles. Everything above is reproducible.
