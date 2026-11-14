@@ -1,0 +1,53 @@
+name: Release
+on:
+  push:
+    tags: ['v*.*.*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install pinned toolchain
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: 1.99.1
+
+      - name: Source audit
+        shell: pwsh
+        run: ./scripts/source-audit.ps1
+
+      - name: Build (locked) + test
+        run: |
+          cargo build --release --locked
+          cargo test --release --locked
+
+      - name: Build dist + hashes
+        shell: pwsh
+        run: ./scripts/build_release.ps1
+
+      - name: Optional signtool signing
+        if: ${{ env.WINDOWS_CERT_SHA1 != '' }}
+        shell: pwsh
+        env:
+          WINDOWS_CERT_SHA1: ${{ secrets.WINDOWS_CERT_SHA1 }}
+        run: |
+          signtool sign /sha1 $env:WINDOWS_CERT_SHA1 /fd SHA256 /td SHA256 /tr http://timestamp.digicert.com `
+            dist\aegis-ss.exe dist\aegis-cli.exe
+          $hashLines = foreach ($n in 'aegis-ss.exe','aegis-cli.exe') {
+            "$((Get-FileHash -Algorithm SHA256 "dist\$n").Hash.ToLower())  $n"
+          }
+          Set-Content -Path dist\SHA256SUMS.txt -Value ($hashLines -join "`n") -Encoding ascii
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/aegis-ss.exe
+            dist/aegis-cli.exe
+            dist/SHA256SUMS.txt
+            dist/RELEASE-MANIFEST.txt
+          generate_release_notes: true
